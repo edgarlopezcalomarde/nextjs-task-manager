@@ -5,6 +5,11 @@ import { geist } from "../lib/fonts";
 export const metadata: Metadata = {
   title: "Task Manager",
   description: "🚀",
+  authors: {
+    name: "Edgar Lopez Calomarde",
+    url: "https://www.youtube.com/@THEskril70",
+  },
+  creator:"Edgar Lopez Calomarde",
 };
 
 export default function RootLayout({
