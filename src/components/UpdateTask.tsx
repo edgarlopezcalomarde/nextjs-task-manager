@@ -2,16 +2,24 @@
 
 import {
   DESC_TYPE,
+  MESSAGE_OK,
   SHOW_BOTH_TYPE,
   SHOW_DESC_TYPE,
   SHOW_TITLE_TYPE,
 } from "@/lib/definitions";
 import { AddIcon, TrashIcon } from "@/lib/icons";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import TaskCardContent from "./TaskCardContent";
 import { Task } from "@/models/task";
+import { useFormState } from "react-dom";
+import { updateTask } from "@/services/task";
+import { useRouter } from "next/navigation";
 
-function UpdateTask({task}:{task:Task}) {
+function UpdateTask({ task }: { task?: Task }) {
+  const initialState = {
+    message: null,
+  };
+
   const [type, setType] = useState("1");
   const [show, setShow] = useState("1");
   const [title, setTitle] = useState("");
@@ -20,6 +28,9 @@ function UpdateTask({task}:{task:Task}) {
     Array<{ item: string; key: string }>
   >([]);
   const [item, setItem] = useState({ value: "", key: "" });
+
+  const [state, formAction] = useFormState(updateTask, initialState);
+  const router = useRouter();
 
   function handleSelectType(e: ChangeEvent<HTMLSelectElement>) {
     setType(e.target.value);
@@ -56,12 +67,38 @@ function UpdateTask({task}:{task:Task}) {
     );
   }
 
+  useEffect(() => {
+    setContent(task?.content ?? "");
+    setType(task?.type ?? "");
+    setShow(task?.show ?? "");
+    setTitle(task?.title ?? "");
+
+    const newConentList =
+      task?.content.split(";").map((contItem) => {
+        return { item: contItem, key: crypto.randomUUID() };
+      }) ?? [];
+
+    setContentList(newConentList);
+  }, []);
+
+  useEffect(() => {
+    if (state.message === MESSAGE_OK) {
+      router.push("/");
+    }
+  }, [state]);
+
   return (
-    <form className="flex flex-col gap-2  mt-10 w-full px-4 h-full">
+    <form
+      className="flex flex-col gap-2  mt-10 w-full px-4 h-full"
+      action={formAction}
+    >
+      <input type="hidden" id="id" name="id" value={task?.id ?? ""} />
       <label className="flex flex-col gap-1">
         <span className="font-medium">Title:</span>
         <input
           type="text"
+          id="title"
+          name="title"
           className="bg-background outline-none rounded-lg border-neutral-700 px-2 py-2 w-full border"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -87,8 +124,8 @@ function UpdateTask({task}:{task:Task}) {
 
         {type === DESC_TYPE ? (
           <textarea
-            name=""
-            id=""
+            name="content"
+            id="content"
             cols={30}
             rows={10}
             className="bg-background outline-none rounded-lg border-neutral-700 px-2 py-2 w-full border"
@@ -118,7 +155,6 @@ function UpdateTask({task}:{task:Task}) {
               <input
                 type="text"
                 className="bg-background outline-none rounded-lg border-neutral-700 px-2 py-2 w-full border"
-                value={item.value}
                 onChange={(e) => setItem({ value: e.target.value, key: "" })}
               />
               <button
